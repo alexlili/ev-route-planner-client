@@ -1,4 +1,7 @@
 import React, { useEffect, useState,useRef } from "react";
+import { Button, Form, Input, Select, Space } from 'antd';
+// Import the form
+
 import { MapContainer, TileLayer, useMap, LMap } from "react-leaflet";
 import { Col, Row } from "antd";
 import axios from 'axios'
@@ -7,6 +10,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-control-geocoder/dist/Control.Geocoder.css";
+
 const Index = () => {
   const map = useRef(null);
   const [travelData, setTravelData] = useState({
@@ -16,7 +20,7 @@ const Index = () => {
   });
   const [zoom, setZoom] = useState(6);
   const [center, setCenter] = useState(
-    L.latLng({ lat: 41.8719, lng: 12.5674 })
+    L.latLng({ lat: -39.271106700817924, lng: 174.8860})
   );
   const [startPointCoordinates, setStartPointCoordinates] = useState({});
   const [arrivalPointCoordinates, setArrivalPointCoordinates] = useState({});
@@ -564,13 +568,110 @@ const Index = () => {
     } else {
       /* wrong argument inserted */ return null;
     }
-  }
+  };
 
+ 
+
+
+//The changed part
+const { Option } = Select;
+const layout = {
+  labelCol: {
+    span: 16,
+    offset:10
+  },
+  wrapperCol: {
+    span: 20,
+    offset:2
+  },
+};
+const tailLayout = {
+  wrapperCol: {
+    offset: 6,
+    span: 16,
+  },
+};
+
+  const [form] = Form.useForm();
+  
+  const onFinish = (values) => {
+    console.log(values);
+  };
+  const onReset = () => {
+    form.resetFields();
+  };
+  
   return (
     <div style={{ display: "flex", flexDirection: "row", height: "85vh" }}>
       <Col xs={24} sm={8} md={6}>
-        Col111
-      </Col>
+    <Form
+      {...layout}
+      form={form}
+      layout ="vertical"
+      name="control-hooks"
+      onFinish={onFinish}
+      style={{
+        maxWidth: 600,
+      }}
+    >
+      <Form.Item
+        name="Your location"
+        label="Your location"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        name="Destination"
+        label="Destination"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="Car Autonomy"
+        label="Car Autonomy"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="Current battery status"
+        label="Current battery status"
+        rules={[
+          {
+            required: true,
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item {...tailLayout}>
+        <Space>
+          <Button type="primary" htmlType="submit">
+            Submit
+          </Button>
+          <Button htmlType="button" onClick={onReset}>
+            Reset
+          </Button>
+        </Space>
+      </Form.Item>
+    </Form>
+    </Col>
       <Col xs={24} sm={16} md={18}>
         <MapContainer
           style={{ height: "85vh", width: "100wh" }}
@@ -585,7 +686,14 @@ const Index = () => {
         </MapContainer>
       </Col>
     </div>
-  );
-};
+    
+      );
+    };
+    export default Index;
+  
 
-export default Index;
+
+  
+
+
+

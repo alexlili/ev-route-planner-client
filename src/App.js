@@ -73,28 +73,28 @@ const App = () => {
     <ConfigProvider
       theme={{
         token: {
-          colorText: "#fff",
+          colorText: "#000",
           // Seed Token
-          colorPrimary: "#f5c518",
+          colorPrimary: "rgb(4 125 149)",
           borderRadius: 4,
 
           // Alias Token
-          colorBgContainer: "#f5c518",
+          colorBgContainer: "rgb(4 125 149)",
         },
         components: {
           Button: {
-            colorText: "#000",
+            colorText: "#fff",
             fontWeight: "bold",
-            defaultBg: "#f5c518",
-            defaultBorderColor: "#f5c518",
+            defaultBg: "rgb(4 125 149)",
+            defaultBorderColor: "rgb(4 125 149)",
             defaultHoverBg: "rgba(245,197,24,0.9)",
             defaultHoverBorderColor: "rgba(245,197,24,0.9)",
             defaultHoverColor: "rgb(0,0,0)",
-            defaultActiveBorderColor: "#f5c518",
-            defaultActiveColor: "#f5c518",
+            defaultActiveBorderColor: "rgb(4 125 149)",
+            defaultActiveColor: "rgb(4 125 149)",
           },
           Input: {
-            colorPrimary: "#f5c518",
+            colorPrimary: "rgb(4 125 149)",
             algorithm: true, // Enable algorithm
           },
         },
