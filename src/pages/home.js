@@ -569,7 +569,7 @@ const Index = () => {
   return (
     <div style={{ display: "flex", flexDirection: "row", height: "85vh" }}>
       <Col xs={24} sm={8} md={6}>
-        Col
+        Col111
       </Col>
       <Col xs={24} sm={16} md={18}>
         <MapContainer
