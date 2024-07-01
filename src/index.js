@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import Home from "./pages/home";
+import Home1 from "./pages/home1";
 import reportWebVitals from "./reportWebVitals";
 import { Amplify } from "aws-amplify";
 import config from "./aws-exports";
@@ -16,7 +17,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Home />,
+        element: <Home1 />,
       }
       
     ],

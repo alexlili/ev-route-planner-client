@@ -38,6 +38,7 @@ const customIcon = L.icon({
   shadowSize: [41, 41],
 });
 const libraries = ["places", "directions"];
+const API_KEY = "4ebfd445-0045-418f-85df-85d035140274";
 const Index = () => {
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: "AIzaSyCxhujXInUyYwI6dtVWFnj6KholRlz8WVc", // Add your Google Maps API key
@@ -69,7 +70,7 @@ const Index = () => {
   });
   const [markersLayers, setMarkersLayers] = useState([]);
 
-  const API_KEY = "4ebfd445-0045-418f-85df-85d035140274";
+  
   const fetchChargingStations = async (start, end) => {
     const response = await axios.get(`https://api.openchargemap.io/v3/poi/`, {
       params: {
@@ -77,7 +78,7 @@ const Index = () => {
         latitude: (start[0] + end[0]) / 2,
         longitude: (start[1] + end[1]) / 2,
         distance: 50, // This value should be adjusted according to your needs
-        maxresults: 100,
+        maxresults: 10,
       },
     });
     return response.data;
@@ -109,7 +110,7 @@ const Index = () => {
     route.push(end);
     return route;
   };
-
+  // 填入起点站
   useEffect(() => {
     const currentMarkersLayers = markersLayers;
     let startPointCheck = currentMarkersLayers.some((item) => {
@@ -124,6 +125,7 @@ const Index = () => {
           position: [startPointCoordinates?.lat, startPointCoordinates?.lng],
           popupText: "Start",
         };
+        // 重新定义起始点
         setStart([startPointCoordinates?.lat, startPointCoordinates?.lng]);
       }
     } else {
@@ -132,11 +134,41 @@ const Index = () => {
           position: [startPointCoordinates?.lat, startPointCoordinates?.lng],
           popupText: "Start",
         });
+        // 重新定义起始点
         setStart([startPointCoordinates?.lat, startPointCoordinates?.lng]);
       }
     }
     setMarkersLayers([...currentMarkersLayers]);
   }, [startPointCoordinates]);
+  // 填入终点站
+  useEffect(() => {
+    const currentMarkersLayers = markersLayers;
+    let endPointCheck = currentMarkersLayers.some((item) => {
+      if (item.popupText === "End") {
+        return true;
+      }
+    });
+    if (endPointCheck) {
+      if (endPointCoordinates?.lat) {
+        currentMarkersLayers[currentMarkersLayers.length - 1] = {
+          position: [endPointCoordinates?.lat, endPointCoordinates?.lng],
+          popupText: "End",
+        };
+        // 重新定义终点
+        setEnd([endPointCoordinates?.lat, endPointCoordinates?.lng]);
+      }
+    } else {
+      if (endPointCoordinates?.lat) {
+        currentMarkersLayers.push({
+          position: [endPointCoordinates?.lat, endPointCoordinates?.lng],
+          popupText: "End",
+        });
+        // 重新定义终点
+        setEnd([endPointCoordinates?.lat, endPointCoordinates?.lng]);
+      }
+    }
+    setMarkersLayers([...currentMarkersLayers]);
+  }, [endPointCoordinates]);
 
   // useEffect(() => {
   //   if (start.length && end.length) {
@@ -150,7 +182,7 @@ const Index = () => {
   //     getStationsAndCalculateRoute();
   //   }
   // }, [start, end, range]);
-
+  // 当新的起始点start和新的终点end更新时触发查找充电桩
   useEffect(() => {
     if (start.length && end.length) {
       // Fetch charge stations within the bounding box
@@ -160,8 +192,8 @@ const Index = () => {
             key: API_KEY,
             latitude: (start[0] + end[0]) / 2,
             longitude: (start[1] + end[1]) / 2,
-            // distance: 50, // This value should be adjusted according to your needs
-            // maxresults: 100,
+            distance: 50, // This value should be adjusted according to your needs
+            maxresults: 10,
             boundingbox:[(`${Math.min(start[0], end[0])},${Math.min(
               start[1],
               end[1]
@@ -175,7 +207,7 @@ const Index = () => {
       fetchChargeStations();
     }
   }, [start, end]);
-
+  // 当充电桩定义好以后触发规划路线
   useEffect(() => {
     // Plan the route
     const planRoute = async () => {
@@ -243,32 +275,7 @@ const Index = () => {
     ]);
   };
 
-  useEffect(() => {
-    const currentMarkersLayers = markersLayers;
-    let endPointCheck = currentMarkersLayers.some((item) => {
-      if (item.popupText === "End") {
-        return true;
-      }
-    });
-    if (endPointCheck) {
-      if (endPointCoordinates?.lat) {
-        currentMarkersLayers[currentMarkersLayers.length - 1] = {
-          position: [endPointCoordinates?.lat, endPointCoordinates?.lng],
-          popupText: "End",
-        };
-        setEnd([endPointCoordinates?.lat, endPointCoordinates?.lng]);
-      }
-    } else {
-      if (endPointCoordinates?.lat) {
-        currentMarkersLayers.push({
-          position: [endPointCoordinates?.lat, endPointCoordinates?.lng],
-          popupText: "End",
-        });
-        setEnd([endPointCoordinates?.lat, endPointCoordinates?.lng]);
-      }
-    }
-    setMarkersLayers([...currentMarkersLayers]);
-  }, [endPointCoordinates]);
+
 
   const layout = {
     labelCol: {
@@ -410,7 +417,7 @@ const Index = () => {
               <Popup>{item.AddressInfo.Title}</Popup>
             </Marker>
           ))} */}
-          {/* {chargeStations.map((station) => (
+          {chargeStations.map((station) => (
             <Marker
               key={station.ID}
               position={[
@@ -420,7 +427,7 @@ const Index = () => {
             >
               <Popup>{station.AddressInfo.Title}</Popup>
             </Marker>
-          ))} */}
+          ))}
           <Polyline positions={route} color="blue" />
           {route.length > 0 && <Polyline positions={route} color="blue" />}
         </MapContainer>
