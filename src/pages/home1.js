@@ -6,10 +6,10 @@ import L from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-control-geocoder";
 import axios from "axios";
+import { getCurrentUser, signOut } from "aws-amplify/auth";
 import "leaflet/dist/leaflet.css";
 import {
   Button,
-  Form,
   Input,
   Menu,
   Card,
@@ -19,6 +19,7 @@ import {
   Tag,
 } from "antd";
 import {
+  HeartOutlined,
   SearchOutlined,
   CloseOutlined,
   NodeIndexOutlined,
@@ -29,7 +30,10 @@ import PlacesAutocomplete, {
   getLatLng,
 } from "react-places-autocomplete";
 import chargerIcon from "../assets/charging-station.png";
+import { generateClient } from "aws-amplify/api";
+import { createClickChargerList,createFavouriteChargerList,createSearchLoactionList } from "../graphql/mutations";
 
+const client = generateClient();
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -46,20 +50,70 @@ const customIcon = new L.Icon({
   popupAnchor: [1, -38],
   shadowSize: [41, 41],
 });
-let currentLocation = null;
 const Planner = () => {
+  const [loginId, setLoginId]=useState('')
+  const currentAuthenticatedUser = async () =>{
+    try {
+      const { signInDetails } = await getCurrentUser();
+
+      console.log(signInDetails)
+      setLoginId(signInDetails?.loginId||'');
+    } catch (err) {
+      setLoginId('');
+      console.log(err);
+    }
+  }
+  useEffect(()=>{
+    currentAuthenticatedUser()
+  },[])
+  const createClickChargerItem = async (station) => {
+    console.log(station)
+    await client.graphql({
+      query: createClickChargerList,
+      variables: {
+        input: {
+          addressInfo: JSON.stringify(station.AddressInfo),
+          uuid: station.uuid,
+        },
+      },
+    });
+  };
+  const createFavouriteChargerListItem = async (loginId,station) => {
+    console.log(station)
+    await client.graphql({
+      query: createFavouriteChargerList,
+      variables: {
+        input: {
+          addressInfo: JSON.stringify(station),
+          userId:loginId
+        },
+      },
+    });
+  };
+  const createSearchLoactionItem = async (station) => {
+    console.log(station)
+    await client.graphql({
+      query: createSearchLoactionList,
+      variables: {
+        input: {
+          addressInfo: JSON.stringify(station)
+        },
+      },
+    });
+  };
   // const map = useMap();
   const [api, contextHolder] = notification.useNotification();
   const openNotificationWithIcon = (type, { message, description }) => {
     api[type]({
       message,
       description,
+      duration:1,
+      placement:'top'
     });
   };
   const [showRouterSearch, setShowRouterSearch] = useState(false);
   const [location, setLocation] = useState("");
   const [chargingStations, setChargingStations] = useState([]);
-  const [chargingSessions, setChargingSessions] = useState([]);
 
   const [travelData, setTravelData] = useState({
     startPoint: "",
@@ -372,19 +426,9 @@ const Planner = () => {
             charger.AddressInfo.Latitude,
             charger.AddressInfo.Longitude,
           ];
-          let chargerMarkerIcon = new L.Icon({
-            iconUrl:
-              "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
-            shadowUrl:
-              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41],
-          });
           // 定义充电桩的标识
           const chargerMarker = L.marker(chargerCoords, {
-            icon: chargerMarkerIcon,
+            icon: customIcon,
             draggable: false,
           });
           //   定义充电桩的浮动内容
@@ -428,12 +472,13 @@ const Planner = () => {
     return null;
   };
 
-  const searchCharger=()=>{
+  const searchCharger = () => {
     if (location) {
       geocodeByAddress(location)
         .then((results) => getLatLng(results[0]))
         .then((latLng) => {
           console.log(latLng);
+          createSearchLoactionItem({name:location,latLng:latLng})
           setCenter([latLng.lat, latLng.lng]);
           mapRef.current.setZoom(12);
           const fetchChargingStations = async () => {
@@ -450,28 +495,28 @@ const Planner = () => {
         })
         .catch((error) => console.error("Error", error));
     }
-  }
- const getCurrentLocation = ()=>{
-// 获取当前地理位置
-navigator.geolocation.getCurrentPosition(
-  (position) => {
-    const { latitude, longitude } = position.coords;
-    currentLocation = [latitude, longitude];
-    setCenter([latitude, longitude]);
-    mapRef.current.setZoom(10);
-  },
-  (error) => {
-    console.error("Error fetching location: ", error);
-  }
-);
- }
+  };
+  const getCurrentLocation = () => {
+    // 获取当前地理位置
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCenter([latitude, longitude]);
+        mapRef.current.setZoom(10);
+      },
+      (error) => {
+        console.error("Error fetching location: ", error);
+      }
+    );
+  };
   useEffect(() => {
-    getCurrentLocation()
+    getCurrentLocation();
   }, []);
 
   return (
     <div style={{ height: "100%", position: "relative", width: "100%" }}>
       {contextHolder}
+      {/* {messageContextHolder} */}
       {showRouterSearch ? (
         <div
           style={{
@@ -687,17 +732,22 @@ navigator.geolocation.getCurrentPosition(
                       marginLeft: 20,
                       color: "yellow",
                       cursor: "pointer",
-                      fontSize:20
+                      fontSize: 20,
                     }}
                     onClick={() => searchCharger()}
                   />
                   <NodeIndexOutlined
-                    style={{ marginLeft: 20, color: "white", cursor: "pointer" ,fontSize:20}}
+                    style={{
+                      marginLeft: 20,
+                      color: "white",
+                      cursor: "pointer",
+                      fontSize: 20,
+                    }}
                     onClick={() => {
                       setShowRouterSearch(true);
                       setChargingStations([]);
                       setLocation("");
-                      getCurrentLocation()
+                      getCurrentLocation();
                     }}
                   />
                 </div>
@@ -764,6 +814,9 @@ navigator.geolocation.getCurrentPosition(
               station.AddressInfo.Longitude,
             ]}
             icon={customIcon}
+            eventHandlers={{
+              click: () => createClickChargerItem(station),
+            }}
           >
             <Popup>
               <div style={{ maxWidth: "250px" }}>
@@ -773,6 +826,7 @@ navigator.geolocation.getCurrentPosition(
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
+                    justifyContent:'space-between'
                   }}
                 >
                   <EnvironmentOutlined
@@ -786,6 +840,16 @@ navigator.geolocation.getCurrentPosition(
                       {station.AddressInfo.Postcode}
                     </div>
                   </div>
+                  <HeartOutlined style={{ fontSize: 24, color: "red",cursor:'pointer'}} onClick={()=>{
+                    if(loginId){
+                      createFavouriteChargerListItem(loginId,station.AddressInfo)
+                    }else{
+                      openNotificationWithIcon("error", {
+                        message: "Error",
+                        description: 'Please login first',
+                      });
+                    }
+                  }}/>
                 </div>
 
                 <p>
