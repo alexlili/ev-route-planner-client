@@ -15,7 +15,7 @@ import { getCurrentUser, signOut } from "aws-amplify/auth";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { listFavouriteChargerLists } from "./graphql/queries";
 import { generateClient } from "aws-amplify/api";
-import CarListCreateForm from "./ui-components/CarListCreateForm";
+// import CarListCreateForm from "./ui-components/CarListCreateForm";
 const client = generateClient();
 const { Content } = Layout;
 const App = () => {
@@ -278,7 +278,7 @@ const App = () => {
         footer={null}
         onCancel={() => setIsAddCarOpen(false)}
       >
-        <div><CarListCreateForm/></div>
+        {/* <div><CarListCreateForm/></div> */}
         
       </Modal>
     </ConfigProvider>
