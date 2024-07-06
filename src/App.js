@@ -5,15 +5,8 @@ import {
   HeartOutlined,
   createFromIconfontCN,
 } from "@ant-design/icons";
-import {
-  Flex,
-  ConfigProvider,
-  Layout,
-  theme,
-  Button,
-  Input,
-  Modal,
-} from "antd";
+import chargerIcon from "./assets/charging-station.png";
+import { Flex, ConfigProvider, Layout, theme, Modal, Image } from "antd";
 
 import "./App.css";
 import "@aws-amplify/ui-react/styles.css";
@@ -29,7 +22,7 @@ const IconFont = createFromIconfontCN({
 const App = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState("");
   const {
     token: { colorBgContainer },
   } = theme.useToken();
@@ -100,30 +93,23 @@ const App = () => {
         },
       }}
     >
-      <Layout>
-        <Header
+      <Layout style={{ position: "relative", height: "100%", width: "100%" }}>
+        <div
           style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0,
-            paddingRight: 20,
             background: colorBgContainer,
-            backgroundColor: "#000",
+            backgroundColor: "rgba(0,0,0,0.6)",
             color: "#fff",
             fontWeight: "bold",
+            position: "fixed",
+            right: 20,
+            top: 20,
+            zIndex: 100,
+            borderRadius:10,
+            padding:'14px 15px'
           }}
         >
-          <Flex align="center" justify="space-between" style={{ width: "90%" }}>
-            <Button
-              style={{}}
-              onClick={() => {
-                navigate("/home");
-              }}
-            >
-              EV Route Planner
-            </Button>
+          <div style={{display:'flex',flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+            <Image height={30} src={chargerIcon} style={{paddingRight:10}}/>
             {username ? (
               <div
                 style={{
@@ -136,7 +122,6 @@ const App = () => {
                   style={{
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    width: 100,
                   }}
                 >
                   {username}
@@ -149,20 +134,29 @@ const App = () => {
                 </div>
               </div>
             ) : (
-              <div
-                style={{ padding: "0 20px", cursor: "pointer" }}
-                onClick={showLoginModal}
-              >
-                Sign In
+              <div style={{display:'flex',flexDirection:'row',justifyContent:'space-between',alignItems:'center'}}>
+                <div
+                  style={{}}
+                  onClick={() => {
+                    navigate("/home");
+                  }}
+                >
+                  EV Route Planner
+                </div>
+                <div
+                  style={{ paddingLeft: 20, cursor: "pointer",color:'#33cc11' }}
+                  onClick={showLoginModal}
+                >
+                  Sign In
+                </div>
               </div>
             )}
-          </Flex>
-        </Header>
+          </div>
+        </div>
         <Content
           style={{
-            // margin: "0 auto",
             width: "100%",
-            height:"85vh",
+            height: "100vh",
           }}
         >
           <Outlet />

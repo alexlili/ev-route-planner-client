@@ -1,13 +1,34 @@
-import React, { useState, useRef } from "react";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import React, { useState, useRef, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, useMap, Popup } from "react-leaflet";
+import "leaflet-control-geocoder/dist/Control.Geocoder.css";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import L from "leaflet";
+import "leaflet-routing-machine";
+import "leaflet-control-geocoder";
 import axios from "axios";
 import "leaflet/dist/leaflet.css";
-import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import "leaflet-control-geocoder/dist/Control.Geocoder.css";
-import { Button, Form, Input, Menu, Row, Col, notification,Space } from "antd";
-import { SearchOutlined, CloseOutlined } from "@ant-design/icons";
-import PlacesAutocomplete from "react-places-autocomplete";
+import {
+  Button,
+  Form,
+  Input,
+  Menu,
+  Card,
+  List,
+  notification,
+  Space,
+  Tag,
+} from "antd";
+import {
+  SearchOutlined,
+  CloseOutlined,
+  NodeIndexOutlined,
+  EnvironmentOutlined,
+} from "@ant-design/icons";
+import PlacesAutocomplete, {
+  geocodeByAddress,
+  getLatLng,
+} from "react-places-autocomplete";
+import chargerIcon from "../assets/charging-station.png";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -17,14 +38,35 @@ L.Icon.Default.mergeOptions({
 });
 
 const appKey = "4ebfd445-0045-418f-85df-85d035140274";
-const appName = "ev-route-planner";
-
+// 设置自定义图标
+const customIcon = new L.Icon({
+  iconUrl: chargerIcon,
+  iconSize: [25, 35],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -38],
+  shadowSize: [41, 41],
+});
+let currentLocation = null;
 const Planner = () => {
+  // const map = useMap();
+  const [api, contextHolder] = notification.useNotification();
+  const openNotificationWithIcon = (type, { message, description }) => {
+    api[type]({
+      message,
+      description,
+    });
+  };
+  const [showRouterSearch, setShowRouterSearch] = useState(false);
+  const [location, setLocation] = useState("");
+  const [chargingStations, setChargingStations] = useState([]);
+  const [chargingSessions, setChargingSessions] = useState([]);
+
   const [travelData, setTravelData] = useState({
-    startPoint: null,
-    arrivalPoint: null,
+    startPoint: "",
+    arrivalPoint: "",
     carAutonomy: null,
   });
+
   const [startPointCoordinates, setStartPointCoordinates] = useState({});
   const [arrivalPointCoordinates, setArrivalPointCoordinates] = useState({});
   const [zoom, setZoom] = useState(6);
@@ -41,23 +83,30 @@ const Planner = () => {
   };
 
   const main = async () => {
-    const form = mapRef.current;
-    form
-      .validateFields()
-      .then(async () => {
-        L.Control.Geocoder.latLng(startPointCoordinates, startPointCoordinates);
+    // if (!map) return;
+    L.Control.Geocoder.latLng(startPointCoordinates, startPointCoordinates);
 
-        const newTravelPath = buildTravelPathStartToEnd();
-        newTravelPath.addTo(mapRef.current);
-        newTravelPath.on("routingerror", handleRoutingError);
-        newTravelPath.on("routesfound", await handleRoutesFound);
-      })
-      .catch(() => {
-        notification.warning({
-          message: "Info",
-          description: "Form data not valid",
-        });
-      });
+    const newTravelPath = buildTravelPathStartToEnd();
+    newTravelPath.addTo(mapRef.current);
+    newTravelPath.on("routingerror", handleRoutingError);
+    newTravelPath.on("routesfound", handleRoutesFound);
+    // const form = mapRef.current;
+    // form
+    //   .validateFields()
+    //   .then(async () => {
+    //     L.Control.Geocoder.latLng(startPointCoordinates, startPointCoordinates);
+
+    //     const newTravelPath = buildTravelPathStartToEnd();
+    //     newTravelPath.addTo(mapRef.current);
+    //     newTravelPath.on("routingerror", handleRoutingError);
+    //     newTravelPath.on("routesfound", await handleRoutesFound);
+    //   })
+    //   .catch(() => {
+    //     notification.warning({
+    //       message: "Info",
+    //       description: "Form data not valid",
+    //     });
+    //   });
   };
 
   const reset = () => {
@@ -71,6 +120,7 @@ const Planner = () => {
       const departureMarker = L.marker(latlng, { draggable: false }).addTo(
         mapRef.current
       );
+      //   markersLayers.removeLayer(departureMarker);
       departureMarker
         .bindPopup("Departure: " + travelData.startPoint, {
           closeOnClick: false,
@@ -99,20 +149,39 @@ const Planner = () => {
         [startPointCoordinates.lat, startPointCoordinates.lng],
         [arrivalPointCoordinates.lat, arrivalPointCoordinates.lng],
       ],
-      false
+      true
     );
   };
+  useEffect(() => {
+    if (travelData.startPoint) {
+      geocodeByAddress(travelData.startPoint)
+        .then((results) => getLatLng(results[0]))
+        .then((latLng) => {
+          setAddress("departureAddress", latLng);
+        })
+        .catch((error) => console.error("Error", error));
+    }
+    if (travelData.arrivalPoint) {
+      geocodeByAddress(travelData.arrivalPoint)
+        .then((results) => getLatLng(results[0]))
+        .then((latLng) => {
+          setAddress("arrivalAddress", latLng);
+        })
+        .catch((error) => console.error("Error", error));
+    }
+  }, [travelData]);
 
   const buildTravelPath = (passThroughPointsArray, onlyOneAlternativeBool) => {
     let arrayArgumentPoints = passThroughPointsArray.map((point) =>
       L.latLng(point[0], point[1])
     );
+    console.log("arrayArgumentPoints===", arrayArgumentPoints);
     return L.Routing.control({
       waypoints: arrayArgumentPoints,
       lineOptions: {
         styles: [
           {
-            color: "white",
+            color: "black",
             opacity: onlyOneAlternativeBool ? 1 : 0,
             weight: 7,
           },
@@ -128,7 +197,7 @@ const Planner = () => {
   };
 
   const handleRoutingError = (e) => {
-    notification.error({
+    openNotificationWithIcon("error", {
       message: "Error",
       description: e.error.message,
     });
@@ -295,6 +364,7 @@ const Planner = () => {
     if (itineraryFoundBool) {
       const finalTravelPath = buildTravelPathStartToEnd();
       finalTravelPath.addTo(map);
+
       finalTravelPath.on("routesfound", () => {
         const allMarkersArray = [];
         finalChargersData.forEach((charger) => {
@@ -302,7 +372,22 @@ const Planner = () => {
             charger.AddressInfo.Latitude,
             charger.AddressInfo.Longitude,
           ];
-          const chargerMarker = L.marker(chargerCoords, { draggable: false });
+          let chargerMarkerIcon = new L.Icon({
+            iconUrl:
+              "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png",
+            shadowUrl:
+              "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+          });
+          // 定义充电桩的标识
+          const chargerMarker = L.marker(chargerCoords, {
+            icon: chargerMarkerIcon,
+            draggable: false,
+          });
+          //   定义充电桩的浮动内容
           const popupContent = `<strong>Station: </strong> ${
             charger.AddressInfo.Title
           }<br>
@@ -314,6 +399,7 @@ const Planner = () => {
               startPointCoordinates.lng
             ).toFixed(2)} km`;
           chargerMarker.bindPopup(popupContent, {
+            autoPan: true,
             closeOnClick: false,
             autoClose: false,
           });
@@ -321,170 +407,456 @@ const Planner = () => {
           allMarkersArray.push(chargerMarker);
         });
         const markersLayerGroup = L.layerGroup(allMarkersArray);
-        markersLayerGroup.addTo(map);
-        map.fitBounds(markersLayerGroup.getBounds());
-        notification.success({
+
+        // markersLayerGroup.addTo(map);
+        openNotificationWithIcon("success", {
           message: "Success",
           description: "Charger stations added to map",
         });
       });
     } else {
-      notification.error({
+      openNotificationWithIcon("error", {
         message: "Error",
         description: "Could not find any suitable route with charging stations",
       });
     }
   };
+  // 移除默认的缩放控件
+  const RemoveZoomControl = () => {
+    const map = useMap();
+    map.zoomControl.remove();
+    return null;
+  };
+
+  const searchCharger=()=>{
+    if (location) {
+      geocodeByAddress(location)
+        .then((results) => getLatLng(results[0]))
+        .then((latLng) => {
+          console.log(latLng);
+          setCenter([latLng.lat, latLng.lng]);
+          mapRef.current.setZoom(12);
+          const fetchChargingStations = async () => {
+            try {
+              const response = await axios.get(
+                `https://api.openchargemap.io/v3/poi/?output=json&latitude=${latLng.lat}&longitude=${latLng.lng}&distance=30&maxresults=50&key=${appKey}`
+              );
+              setChargingStations(response.data);
+            } catch (error) {
+              console.error("Error fetching charging stations:", error);
+            }
+          };
+          fetchChargingStations();
+        })
+        .catch((error) => console.error("Error", error));
+    }
+  }
+ const getCurrentLocation = ()=>{
+// 获取当前地理位置
+navigator.geolocation.getCurrentPosition(
+  (position) => {
+    const { latitude, longitude } = position.coords;
+    currentLocation = [latitude, longitude];
+    setCenter([latitude, longitude]);
+    mapRef.current.setZoom(10);
+  },
+  (error) => {
+    console.error("Error fetching location: ", error);
+  }
+);
+ }
+  useEffect(() => {
+    getCurrentLocation()
+  }, []);
 
   return (
-    <div>
-      <Row gutter={16}>
-        <Col span={8}>
-          <Form layout="vertical" ref={mapRef}>
-            <Form.Item
-              label="Starting point"
-              name="startPoint"
-              rules={[
-                { required: true, message: "Starting point is required" },
-              ]}
+    <div style={{ height: "100%", position: "relative", width: "100%" }}>
+      {contextHolder}
+      {showRouterSearch ? (
+        <div
+          style={{
+            position: "absolute",
+            left: 20,
+            top: 20,
+            zIndex: 100,
+            background: "rgba(0,0,0,0.6)",
+            borderRadius: 10,
+            padding: 10,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span style={{ color: "white" }}>
+              Plese input start point, end point and
+            </span>
+            <CloseOutlined
+              style={{ paddingLeft: 18, color: "white", cursor: "pointer" }}
+              onClick={() => setShowRouterSearch(false)}
+            />
+          </div>
+
+          <div
+            style={{
+              height: 200,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-around",
+            }}
+          >
+            <PlacesAutocomplete
+              value={travelData.startPoint}
+              onChange={(address, placeId, suggestion) => {
+                setTravelData({
+                  ...travelData,
+                  startPoint: address,
+                });
+              }}
+              onSelect={(address, placeId, suggestion) => {
+                console.log("select", suggestion);
+                setTravelData({
+                  ...travelData,
+                  startPoint: suggestion.description,
+                });
+              }}
             >
-              <PlacesAutocomplete
-                value={travelData.startPoint}
-                onChange={(address) =>
-                  setTravelData({ ...travelData, startPoint: address })
-                }
-                onSelect={(address) =>
-                  setTravelData({ ...travelData, startPoint: address })
-                }
-              >
-                {({
-                  getInputProps,
-                  suggestions,
-                  getSuggestionItemProps,
-                  loading,
-                }) => (
-                  <div>
-                    <input
-                      {...getInputProps({
-                        placeholder: "Search Places ...",
-                        className: "location-search-input",
-                      })}
-                    />
-                    <div className="autocomplete-dropdown-container">
-                      {loading && <div>Loading...</div>}
-                      {suggestions.map((suggestion,index) => {
-                        console.log(suggestion)
-                        const className = suggestion.active
-                          ? "suggestion-item--active"
-                          : "suggestion-item";
-                        // inline style for demonstration purpose
-                        const style = suggestion.active
-                          ? { backgroundColor: "#fafafa", cursor: "pointer" }
-                          : { backgroundColor: "#ffffff", cursor: "pointer" };
-                        return (
-                          <div key={index}
-                            {...getSuggestionItemProps(suggestion, {
-                              className,
-                              style,
-                            })}
-                          >
-                            <span>{suggestion.description}</span>
-                          </div>
-                        );
-                      })}{" "}
-                    </div>
+              {({
+                getInputProps,
+                suggestions,
+                getSuggestionItemProps,
+                loading,
+              }) => (
+                <div>
+                  <Input
+                    style={{ width: 240 }}
+                    {...getInputProps({
+                      placeholder: "Search Places ...",
+                      className: "location-search-input",
+                    })}
+                  />
+                  <div className="autocomplete-dropdown-container">
+                    {loading && <div>Loading...</div>}
+                    {suggestions.map((suggestion, index) => {
+                      const className = suggestion.active
+                        ? "suggestion-item--active"
+                        : "suggestion-item";
+                      // inline style for demonstration purpose
+                      const style = suggestion.active
+                        ? { backgroundColor: "#fafafa", cursor: "pointer" }
+                        : { backgroundColor: "#ffffff", cursor: "pointer" };
+                      return (
+                        <div
+                          key={suggestion?.placeId || index}
+                          {...getSuggestionItemProps(suggestion, {
+                            className,
+                            style,
+                          })}
+                        >
+                          <span>{suggestion.description}</span>
+                        </div>
+                      );
+                    })}{" "}
                   </div>
-                )}
-              </PlacesAutocomplete>
-            </Form.Item>
-            <Form.Item
-              label="Arrival point"
-              name="arrivalPoint"
-              rules={[{ required: true, message: "Arrival point is required" }]}
+                </div>
+              )}
+            </PlacesAutocomplete>
+            <PlacesAutocomplete
+              value={travelData.arrivalPoint}
+              onChange={(address) => {
+                setTravelData({
+                  ...travelData,
+                  startPoint: address,
+                });
+              }}
+              onSelect={(address, placeId, suggestion) => {
+                setTravelData({
+                  ...travelData,
+                  arrivalPoint: suggestion.description,
+                });
+              }}
             >
-              <PlacesAutocomplete
-                value={travelData.arrivalPoint}
-                onChange={(address) =>
-                  setTravelData({ ...travelData, arrivalPoint: address })
-                }
-                onSelect={(address) =>
-                  setTravelData({ ...travelData, arrivalPoint: address })
-                }
-              >
-                {({
-                  getInputProps,
-                  suggestions,
-                  getSuggestionItemProps,
-                  loading,
-                }) => (
-                  <div>
-                    <input
-                      {...getInputProps({
-                        placeholder: "Search Places ...",
-                        className: "location-search-input",
-                      })}
-                    />
-                    <div className="autocomplete-dropdown-container">
-                      {loading && <div>Loading...</div>}
-                      {suggestions.map((suggestion,index) => {
-                        const className = suggestion.active
-                          ? "suggestion-item--active"
-                          : "suggestion-item";
-                        // inline style for demonstration purpose
-                        const style = suggestion.active
-                          ? { backgroundColor: "#fafafa", cursor: "pointer" }
-                          : { backgroundColor: "#ffffff", cursor: "pointer" };
-                        return (
-                          <div key={index}
-                            {...getSuggestionItemProps(suggestion, {
-                              className,
-                              style,
-                            })}
-                          >
-                            <span>{suggestion.description}</span>
-                          </div>
-                        );
-                      })}{" "}
-                    </div>
+              {({
+                getInputProps,
+                suggestions,
+                getSuggestionItemProps,
+                loading,
+              }) => (
+                <div>
+                  <Input
+                    style={{ width: 240 }}
+                    {...getInputProps({
+                      placeholder: "Search Places ...",
+                      className: "location-search-input",
+                    })}
+                  />
+                  <div className="autocomplete-dropdown-container">
+                    {loading && <div>Loading...</div>}
+                    {suggestions.map((suggestion, index) => {
+                      const className = suggestion.active
+                        ? "suggestion-item--active"
+                        : "suggestion-item";
+                      // inline style for demonstration purpose
+                      const style = suggestion.active
+                        ? { backgroundColor: "#fafafa", cursor: "pointer" }
+                        : { backgroundColor: "#ffffff", cursor: "pointer" };
+                      return (
+                        <div
+                          key={suggestion?.placeId || index}
+                          {...getSuggestionItemProps(suggestion, {
+                            className,
+                            style,
+                          })}
+                        >
+                          <span>{suggestion.description}</span>
+                        </div>
+                      );
+                    })}{" "}
                   </div>
-                )}
-              </PlacesAutocomplete>
-            </Form.Item>
-            <Form.Item
-              label="Car autonomy (km)"
-              name="carAutonomy"
-              rules={[{ required: true, message: "Car autonomy is required" }]}
-            >
-              <Input
-                type="number"
-                value={travelData.carAutonomy}
-                onChange={(e) =>
-                  setTravelData({ ...travelData, carAutonomy: e.target.value })
-                }
-              />
-            </Form.Item>
-            <Form.Item>
+                </div>
+              )}
+            </PlacesAutocomplete>
+
+            <Input
+              style={{ width: 240 }}
+              placeholder="Car autonomy (km)"
+              type="number"
+              value={travelData.carAutonomy}
+              onChange={(e) =>
+                setTravelData({ ...travelData, carAutonomy: e.target.value })
+              }
+            />
             <Space>
               <Button icon={<SearchOutlined />} onClick={main}>
-              Search
+                Search
               </Button>
               <Button icon={<CloseOutlined />} onClick={reset}>
                 Reset
               </Button>
             </Space>
-          </Form.Item>
-          </Form>
-        </Col>
-        <Col span={16}>
-          <MapContainer
-            center={center}
-            zoom={zoom}
-            style={{ height: "500px", width: "100%" }}
+          </div>
+        </div>
+      ) : (
+        <div
+          style={{
+            position: "absolute",
+            left: 20,
+            top: 20,
+            zIndex: 100,
+            display: "flex",
+            flexDirection: "row",
+            borderRadius: 10,
+            padding: 10,
+            background: "rgba(0,0,0,0.6)",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <PlacesAutocomplete
+            style={{ position: "relative" }}
+            value={location}
+            onChange={(address, placeId, suggestion) => {
+              setLocation(address);
+            }}
+            onSelect={(address, placeId, suggestion) => {
+              console.log("select", suggestion);
+              setLocation(suggestion.description);
+            }}
           >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          </MapContainer>
-        </Col>
-      </Row>
+            {({
+              getInputProps,
+              suggestions,
+              getSuggestionItemProps,
+              loading,
+            }) => (
+              <div>
+                <div>
+                  <Input
+                    style={{ width: 200 }}
+                    {...getInputProps({
+                      placeholder: "Search EV charger ...",
+                      className: "location-search-input",
+                    })}
+                  />
+                  <SearchOutlined
+                    style={{
+                      marginLeft: 20,
+                      color: "yellow",
+                      cursor: "pointer",
+                      fontSize:20
+                    }}
+                    onClick={() => searchCharger()}
+                  />
+                  <NodeIndexOutlined
+                    style={{ marginLeft: 20, color: "white", cursor: "pointer" ,fontSize:20}}
+                    onClick={() => {
+                      setShowRouterSearch(true);
+                      setChargingStations([]);
+                      setLocation("");
+                      getCurrentLocation()
+                    }}
+                  />
+                </div>
+
+                <div
+                  className="autocomplete-dropdown-container"
+                  style={{ borderRadius: 4, marginTop: 4 }}
+                >
+                  {loading && <div>Loading...</div>}
+                  {suggestions.map((suggestion, index) => {
+                    const className = suggestion.active
+                      ? "suggestion-item--active"
+                      : "suggestion-item";
+                    // inline style for demonstration purpose
+                    const style = suggestion.active
+                      ? { backgroundColor: "#fafafa", cursor: "pointer" }
+                      : { backgroundColor: "#ffffff", cursor: "pointer" };
+                    return (
+                      <div
+                        key={suggestion?.placeId || index}
+                        {...getSuggestionItemProps(suggestion, {
+                          className,
+                          style,
+                        })}
+                        style={{
+                          padding: "2px 5px",
+                          color: "white",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span>{suggestion.description}</span>
+                      </div>
+                    );
+                  })}{" "}
+                </div>
+              </div>
+            )}
+          </PlacesAutocomplete>
+        </div>
+      )}
+
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        style={{
+          height: "100%",
+          width: "100%",
+          position: "relative",
+          zIndex: 10,
+        }}
+        ref={mapRef}
+      >
+        <TileLayer
+          style={{ zIndex: 10 }}
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+        />
+        <RemoveZoomControl />
+        {chargingStations.map((station, idx) => (
+          <Marker
+            key={idx}
+            position={[
+              station.AddressInfo.Latitude,
+              station.AddressInfo.Longitude,
+            ]}
+            icon={customIcon}
+          >
+            <Popup>
+              <div style={{ maxWidth: "250px" }}>
+                <h3>{station.AddressInfo.Title}</h3>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                  }}
+                >
+                  <EnvironmentOutlined
+                    style={{ fontSize: 24, color: "orange" }}
+                  />
+                  <div style={{ paddingLeft: 10 }}>
+                    <div>{station.AddressInfo.AddressLine1}</div>
+                    <div>
+                      {station.AddressInfo.Town},{" "}
+                      {station.AddressInfo.StateOrProvince}{" "}
+                      {station.AddressInfo.Postcode}
+                    </div>
+                  </div>
+                </div>
+
+                <p>
+                  Status:{" "}
+                  <Tag
+                    color={
+                      station.StatusType && station.StatusType.IsOperational
+                        ? "green"
+                        : "red"
+                    }
+                  >
+                    {station.StatusType ? station.StatusType.Title : "unknown"}
+                  </Tag>
+                </p>
+                <div style={{ borderRadius: 4, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: 8,
+                      fontSize: 16,
+                      background: "#99CC99",
+                      color: "#006",
+                    }}
+                  >
+                    Price Info:
+                  </div>
+                  <div
+                    style={{
+                      textAlign: "center",
+                      background: "rgba(150,111,172,0.4)",
+                      padding: 8,
+                      color: "#903",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {station.UsageCost || "Unknown"}
+                  </div>
+                </div>
+
+                <div
+                  style={{ borderRadius: 4, overflow: "hidden", marginTop: 10 }}
+                >
+                  <div
+                    style={{
+                      padding: 5,
+                      fontSize: 14,
+                      background: "#cf9",
+                      color: "green",
+                    }}
+                  >
+                    General Comments
+                  </div>
+                  <div
+                    style={{
+                      border: "1px solid #ddd",
+                      borderBottomLeftRadius: 4,
+                      borderBottomRightRadius: 4,
+                      textAlign: "center",
+                      padding: 8,
+                      color: "#888",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {station.GeneralComments || "No comments available"}
+                  </div>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 };
