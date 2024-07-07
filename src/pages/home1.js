@@ -31,7 +31,11 @@ import PlacesAutocomplete, {
 } from "react-places-autocomplete";
 import chargerIcon from "../assets/charging-station.png";
 import { generateClient } from "aws-amplify/api";
-import { createClickChargerList,createFavouriteChargerList,createSearchLoactionList } from "../graphql/mutations";
+import {
+  createClickChargerList,
+  createFavouriteChargerList,
+  createSearchLoactionList,
+} from "../graphql/mutations";
 
 const client = generateClient();
 delete L.Icon.Default.prototype._getIconUrl;
@@ -51,23 +55,23 @@ const customIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 const Planner = () => {
-  const [loginId, setLoginId]=useState('')
-  const currentAuthenticatedUser = async () =>{
+  const [loginId, setLoginId] = useState("");
+  const currentAuthenticatedUser = async () => {
     try {
       const { signInDetails } = await getCurrentUser();
 
-      console.log(signInDetails)
-      setLoginId(signInDetails?.loginId||'');
+      console.log(signInDetails);
+      setLoginId(signInDetails?.loginId || "");
     } catch (err) {
-      setLoginId('');
+      setLoginId("");
       console.log(err);
     }
-  }
-  useEffect(()=>{
-    currentAuthenticatedUser()
-  },[])
+  };
+  useEffect(() => {
+    currentAuthenticatedUser();
+  }, []);
   const createClickChargerItem = async (station) => {
-    console.log(station)
+    console.log(station);
     await client.graphql({
       query: createClickChargerList,
       variables: {
@@ -78,25 +82,25 @@ const Planner = () => {
       },
     });
   };
-  const createFavouriteChargerListItem = async (loginId,station) => {
-    console.log(station)
+  const createFavouriteChargerListItem = async (loginId, station) => {
+    console.log(station);
     await client.graphql({
       query: createFavouriteChargerList,
       variables: {
         input: {
           addressInfo: JSON.stringify(station),
-          userId:loginId
+          userId: loginId,
         },
       },
     });
   };
   const createSearchLoactionItem = async (station) => {
-    console.log(station)
+    console.log(station);
     await client.graphql({
       query: createSearchLoactionList,
       variables: {
         input: {
-          addressInfo: JSON.stringify(station)
+          addressInfo: JSON.stringify(station),
         },
       },
     });
@@ -107,8 +111,8 @@ const Planner = () => {
     api[type]({
       message,
       description,
-      duration:1,
-      placement:'top'
+      duration: 1,
+      placement: "top",
     });
   };
   const [showRouterSearch, setShowRouterSearch] = useState(false);
@@ -118,7 +122,7 @@ const Planner = () => {
   const [travelData, setTravelData] = useState({
     startPoint: "",
     arrivalPoint: "",
-    carAutonomy: null,
+    carAutonomy: 0,
   });
 
   const [startPointCoordinates, setStartPointCoordinates] = useState({});
@@ -129,12 +133,17 @@ const Planner = () => {
   const [finalTravelPath, setFinalTravelPath] = useState(null);
   const mapRef = useRef();
   const markersLayers = L.layerGroup([]);
-
-  const configValues = {
+const [currentBattery,setCurrentBattery]=useState(0)
+  const [configValues,setConfigValues] = useState({
     radiusIncrementBy: 2,
     batteryPercentageUsage: 0.7, // 70%
     minRadius: 2, // 2 km
-  };
+  })
+  useEffect(()=>{
+    if(currentBattery>=0&&travelData.carAutonomy>0){
+      setConfigValues({...configValues,batteryPercentageUsage:(currentBattery/travelData.carAutonomy).toFixed(1)})
+    }
+  },[currentBattery,travelData])
 
   const main = async () => {
     // if (!map) return;
@@ -478,7 +487,7 @@ const Planner = () => {
         .then((results) => getLatLng(results[0]))
         .then((latLng) => {
           console.log(latLng);
-          createSearchLoactionItem({name:location,latLng:latLng})
+          createSearchLoactionItem({ name: location, latLng: latLng });
           setCenter([latLng.lat, latLng.lng]);
           mapRef.current.setZoom(12);
           const fetchChargingStations = async () => {
@@ -516,7 +525,6 @@ const Planner = () => {
   return (
     <div style={{ height: "100%", position: "relative", width: "100%" }}>
       {contextHolder}
-      {/* {messageContextHolder} */}
       {showRouterSearch ? (
         <div
           style={{
@@ -538,7 +546,8 @@ const Planner = () => {
             }}
           >
             <span style={{ color: "white" }}>
-              Please input start point, end point, Car autonomy and current battery 
+              Please input start point, end point, <br />
+              car autonomy and current battery
             </span>
             <CloseOutlined
               style={{ paddingLeft: 18, color: "white", cursor: "pointer" }}
@@ -580,7 +589,7 @@ const Planner = () => {
                   <Input
                     style={{ width: 240 }}
                     {...getInputProps({
-                      placeholder: "Search Places ...",
+                      placeholder: "Start Point ...",
                       className: "location-search-input",
                     })}
                   />
@@ -615,7 +624,7 @@ const Planner = () => {
               onChange={(address) => {
                 setTravelData({
                   ...travelData,
-                  startPoint: address,
+                  arrivalPoint: address,
                 });
               }}
               onSelect={(address, placeId, suggestion) => {
@@ -635,7 +644,7 @@ const Planner = () => {
                   <Input
                     style={{ width: 240 }}
                     {...getInputProps({
-                      placeholder: "Search Places ...",
+                      placeholder: "End Point ...",
                       className: "location-search-input",
                     })}
                   />
@@ -673,6 +682,16 @@ const Planner = () => {
               value={travelData.carAutonomy}
               onChange={(e) =>
                 setTravelData({ ...travelData, carAutonomy: e.target.value })
+              }
+            />
+
+            <Input
+              style={{ width: 240 }}
+              placeholder="Current Battery(km)"
+              type="number"
+              value={currentBattery}
+              onChange={(e) =>
+                setCurrentBattery(e.target.value)
               }
             />
             <Space>
@@ -826,7 +845,7 @@ const Planner = () => {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    justifyContent:'space-between'
+                    justifyContent: "space-between",
                   }}
                 >
                   <EnvironmentOutlined
@@ -840,16 +859,22 @@ const Planner = () => {
                       {station.AddressInfo.Postcode}
                     </div>
                   </div>
-                  <HeartOutlined style={{ fontSize: 24, color: "red",cursor:'pointer'}} onClick={()=>{
-                    if(loginId){
-                      createFavouriteChargerListItem(loginId,station.AddressInfo)
-                    }else{
-                      openNotificationWithIcon("error", {
-                        message: "Error",
-                        description: 'Please login first',
-                      });
-                    }
-                  }}/>
+                  <HeartOutlined
+                    style={{ fontSize: 24, color: "red", cursor: "pointer" }}
+                    onClick={() => {
+                      if (loginId) {
+                        createFavouriteChargerListItem(
+                          loginId,
+                          station.AddressInfo
+                        );
+                      } else {
+                        openNotificationWithIcon("error", {
+                          message: "Error",
+                          description: "Please login first",
+                        });
+                      }
+                    }}
+                  />
                 </div>
 
                 <p>
