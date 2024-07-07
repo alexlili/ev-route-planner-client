@@ -538,7 +538,7 @@ const Planner = () => {
             }}
           >
             <span style={{ color: "white" }}>
-              Plese input start point, end point and
+              Please input start point, end point, Car autonomy and current battery 
             </span>
             <CloseOutlined
               style={{ paddingLeft: 18, color: "white", cursor: "pointer" }}

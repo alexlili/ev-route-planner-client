@@ -1,3 +1,11 @@
+type UserCarList @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  portType: String
+  brand: String
+  range: String
+  name: String
+}
+
 type ClickChargerList @model @auth(rules: [{allow: public}, {allow: private, operations: [create]}]) {
   id: ID!
   uuid: String

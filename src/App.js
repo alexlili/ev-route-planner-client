@@ -13,9 +13,10 @@ import { useNavigate } from "react-router-dom";
 import { Outlet, useLocation } from "react-router-dom";
 import { getCurrentUser, signOut } from "aws-amplify/auth";
 import { Authenticator } from "@aws-amplify/ui-react";
-import { listFavouriteChargerLists } from "./graphql/queries";
+import { listFavouriteChargerLists, listUserCarLists} from "./graphql/queries";
 import { generateClient } from "aws-amplify/api";
-// import CarListCreateForm from "./ui-components/CarListCreateForm";
+import UserCarListCreateForm from "./ui-components/UserCarListCreateForm.jsx";
+import carIcon from "./assets/car.png";
 const client = generateClient();
 const { Content } = Layout;
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [favList, setFavList] = useState([]);
+  const [userCarsList,setUserCarsList]= useState([]);
   const {
     token: { colorBgContainer },
   } = theme.useToken();
@@ -49,9 +51,19 @@ const App = () => {
     );
     setFavList(dataListFromAPI);
   }
+  async function getUserCarsList() {
+    const apiData = await client.graphql({
+      query: listUserCarLists,
+      variables: { userId: username },
+    });
+    const dataListFromAPI = apiData.data.listUserCarLists.items;
+    console.log("apiData===", dataListFromAPI);
+    setUserCarsList(dataListFromAPI);
+  }
   useEffect(() => {
     if (moreStatus) {
       getListFavouriteChargerLists();
+      getUserCarsList()
     }
   }, [moreStatus]);
   async function handleSignOut() {
@@ -235,11 +247,13 @@ const App = () => {
                 header={null}
                 footer={null}
                 bordered
-                dataSource={favList}
+                dataSource={userCarsList}
                 renderItem={(item) => (
                   <List.Item style={{ color: "white" }}>
-                    <EnvironmentOutlined style={{ paddingRight: 5 }} />
-                    {item?.addressInfo?.Title || ""}
+                    <Image src={carIcon} width={20}/>
+                    <span>{item?.name || ""}</span>
+                    <span>{item?.portType || ""}</span>
+                    <span>{item?.range || ""}KM</span>
                   </List.Item>
                 )}
               />
@@ -278,7 +292,10 @@ const App = () => {
         footer={null}
         onCancel={() => setIsAddCarOpen(false)}
       >
-        {/* <div><CarListCreateForm/></div> */}
+        <div><UserCarListCreateForm onSubmit={(e)=>{
+          console.log(e)
+          setIsAddCarOpen(false)
+        }}/></div>
         
       </Modal>
     </ConfigProvider>
