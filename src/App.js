@@ -14,6 +14,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { getCurrentUser, signOut } from "aws-amplify/auth";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { listFavouriteChargerLists, listUserCarLists} from "./graphql/queries";
+import {createUserCarList} from './graphql/mutations.js'
 import { generateClient } from "aws-amplify/api";
 import UserCarListCreateForm from "./ui-components/UserCarListCreateForm.jsx";
 import carIcon from "./assets/car.png";
@@ -53,12 +54,20 @@ const App = () => {
   }
   async function getUserCarsList() {
     const apiData = await client.graphql({
-      query: listUserCarLists,
-      variables: { userId: username },
+      query: listUserCarLists
     });
     const dataListFromAPI = apiData.data.listUserCarLists.items;
     console.log("apiData===", dataListFromAPI);
     setUserCarsList(dataListFromAPI);
+  }
+  const createUserCarListItem = async(data)=> {
+    console.log(data);
+    await client.graphql({
+      query: createUserCarList,
+      variables: { input: data },
+    });
+    setIsAddCarOpen(false)
+    getUserCarsList()
   }
   useEffect(() => {
     if (moreStatus) {
@@ -292,9 +301,11 @@ const App = () => {
         footer={null}
         onCancel={() => setIsAddCarOpen(false)}
       >
-        <div><UserCarListCreateForm onSubmit={(e)=>{
-          console.log(e)
-          setIsAddCarOpen(false)
+        <div><UserCarListCreateForm onSubmit={(data)=>{
+          console.log(data)
+          createUserCarListItem(data)
+
+          
         }}/></div>
         
       </Modal>

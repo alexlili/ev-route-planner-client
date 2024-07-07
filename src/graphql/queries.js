@@ -7,8 +7,8 @@ export const getUserCarList = /* GraphQL */ `
       id
       portType
       brand
-      range
       name
+      range
       createdAt
       updatedAt
       __typename
@@ -26,8 +26,8 @@ export const listUserCarLists = /* GraphQL */ `
         id
         portType
         brand
-        range
         name
+        range
         createdAt
         updatedAt
         __typename

@@ -27,13 +27,13 @@ export default function UserCarListUpdateForm(props) {
   const initialValues = {
     portType: "",
     brand: "",
-    range: "",
     name: "",
+    range: "",
   };
   const [portType, setPortType] = React.useState(initialValues.portType);
   const [brand, setBrand] = React.useState(initialValues.brand);
-  const [range, setRange] = React.useState(initialValues.range);
   const [name, setName] = React.useState(initialValues.name);
+  const [range, setRange] = React.useState(initialValues.range);
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = userCarListRecord
@@ -41,8 +41,8 @@ export default function UserCarListUpdateForm(props) {
       : initialValues;
     setPortType(cleanValues.portType);
     setBrand(cleanValues.brand);
-    setRange(cleanValues.range);
     setName(cleanValues.name);
+    setRange(cleanValues.range);
     setErrors({});
   };
   const [userCarListRecord, setUserCarListRecord] =
@@ -65,8 +65,8 @@ export default function UserCarListUpdateForm(props) {
   const validations = {
     portType: [],
     brand: [],
-    range: [],
     name: [],
+    range: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -96,8 +96,8 @@ export default function UserCarListUpdateForm(props) {
         let modelFields = {
           portType: portType ?? null,
           brand: brand ?? null,
-          range: range ?? null,
           name: name ?? null,
+          range: range ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -160,8 +160,8 @@ export default function UserCarListUpdateForm(props) {
             const modelFields = {
               portType: value,
               brand,
-              range,
               name,
+              range,
             };
             const result = onChange(modelFields);
             value = result?.portType ?? value;
@@ -187,8 +187,8 @@ export default function UserCarListUpdateForm(props) {
             const modelFields = {
               portType,
               brand: value,
-              range,
               name,
+              range,
             };
             const result = onChange(modelFields);
             value = result?.brand ?? value;
@@ -204,33 +204,6 @@ export default function UserCarListUpdateForm(props) {
         {...getOverrideProps(overrides, "brand")}
       ></TextField>
       <TextField
-        label="Range"
-        isRequired={false}
-        isReadOnly={false}
-        value={range}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              portType,
-              brand,
-              range: value,
-              name,
-            };
-            const result = onChange(modelFields);
-            value = result?.range ?? value;
-          }
-          if (errors.range?.hasError) {
-            runValidationTasks("range", value);
-          }
-          setRange(value);
-        }}
-        onBlur={() => runValidationTasks("range", range)}
-        errorMessage={errors.range?.errorMessage}
-        hasError={errors.range?.hasError}
-        {...getOverrideProps(overrides, "range")}
-      ></TextField>
-      <TextField
         label="Name"
         isRequired={false}
         isReadOnly={false}
@@ -241,8 +214,8 @@ export default function UserCarListUpdateForm(props) {
             const modelFields = {
               portType,
               brand,
-              range,
               name: value,
+              range,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -256,6 +229,33 @@ export default function UserCarListUpdateForm(props) {
         errorMessage={errors.name?.errorMessage}
         hasError={errors.name?.hasError}
         {...getOverrideProps(overrides, "name")}
+      ></TextField>
+      <TextField
+        label="Range"
+        isRequired={false}
+        isReadOnly={false}
+        value={range}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              portType,
+              brand,
+              name,
+              range: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.range ?? value;
+          }
+          if (errors.range?.hasError) {
+            runValidationTasks("range", value);
+          }
+          setRange(value);
+        }}
+        onBlur={() => runValidationTasks("range", range)}
+        errorMessage={errors.range?.errorMessage}
+        hasError={errors.range?.hasError}
+        {...getOverrideProps(overrides, "range")}
       ></TextField>
       <Flex
         justifyContent="space-between"

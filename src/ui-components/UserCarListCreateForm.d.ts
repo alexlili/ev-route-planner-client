@@ -24,22 +24,22 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type UserCarListCreateFormInputValues = {
     portType?: string;
     brand?: string;
-    range?: string;
     name?: string;
+    range?: string;
 };
 export declare type UserCarListCreateFormValidationValues = {
     portType?: ValidationFunction<string>;
     brand?: ValidationFunction<string>;
-    range?: ValidationFunction<string>;
     name?: ValidationFunction<string>;
+    range?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type UserCarListCreateFormOverridesProps = {
     UserCarListCreateFormGrid?: PrimitiveOverrideProps<GridProps>;
     portType?: PrimitiveOverrideProps<TextFieldProps>;
     brand?: PrimitiveOverrideProps<TextFieldProps>;
-    range?: PrimitiveOverrideProps<TextFieldProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
+    range?: PrimitiveOverrideProps<TextFieldProps>;
 } & EscapeHatchProps;
 export declare type UserCarListCreateFormProps = React.PropsWithChildren<{
     overrides?: UserCarListCreateFormOverridesProps | undefined | null;

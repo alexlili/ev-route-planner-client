@@ -9,8 +9,8 @@ export const onCreateUserCarList = /* GraphQL */ `
       id
       portType
       brand
-      range
       name
+      range
       createdAt
       updatedAt
       __typename
@@ -25,8 +25,8 @@ export const onUpdateUserCarList = /* GraphQL */ `
       id
       portType
       brand
-      range
       name
+      range
       createdAt
       updatedAt
       __typename
@@ -41,8 +41,8 @@ export const onDeleteUserCarList = /* GraphQL */ `
       id
       portType
       brand
-      range
       name
+      range
       createdAt
       updatedAt
       __typename
