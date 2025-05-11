@@ -117,6 +117,8 @@ A cloud-based route planner for electric vehicles (EVs) that calculates the shor
 ## 📘 References
 
 See full documentation and citations in the [MSE806-Electric Vehicle Route Planner.pdf](./MSE806-Electric%20Vehicle%20Route%20Planner.pdf)
+[View Project Demo Video](https://youtu.be/D2-zMzfj99w)
+See the project presentation file [MSE806_Electric vehicle route planner.pptx](./MSE806_Electric%20vehicle%20route%20planner.pptx)
 
 ---
 
