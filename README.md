@@ -1,3 +1,138 @@
+# ⚡ Electric Vehicle Route Planner
+
+A cloud-based route planner for electric vehicles (EVs) that calculates the shortest and most efficient route while dynamically recommending charging stations based on battery levels. Built using React, AWS Amplify, OpenChargeMap, OpenStreetMap, and Google Maps APIs.
+
+---
+
+## 🌐 Live Demos
+
+- **Client App**: [ev-route-planner-client](https://dev.d1pghmqcjpsb6.amplifyapp.com/)
+- **Admin App**: [ev-route-planner-admin](https://dev.d2uxghi9675sr8.amplifyapp.com/)
+
+---
+
+## 📁 Repositories
+
+- [Frontend - Client](https://github.com/alexlili/ev-route-planner-client)
+- [Frontend - Admin](https://github.com/alexlili/ev-route-planner-admin)
+- [Backend - API](https://github.com/alexlili/ev-route-planner-api)
+
+---
+
+## 🎯 Project Objectives
+
+- Help EV users plan routes with charging stations included
+- Support real-time decisions based on battery level and range
+- Analyze user behavior for improved routing suggestions
+- Provide admin tools to monitor usage and generate reports
+
+---
+
+## ⚙️ Features
+
+### 🚗 EV Route Planning
+- Input departure, destination, EV range, and current battery %
+- Calculates feasible route using OpenStreetMap
+- Recommends charging stations from OpenChargeMap
+- Dynamically integrates multiple stations if needed
+
+### 📍 Charging Station Search
+- Search nearby charging stations by address/city
+- View station info: operational status, price, reviews
+- Bookmark favorite stations
+
+### 🧑‍💼 Admin Panel
+- View user data and usage analytics
+- Generate reports on route trends and behavior
+- Manage system logs and errors
+
+### 🔐 Authentication
+- Secure sign-up and login with AWS Cognito
+- Separate access for Admin and User accounts
+
+---
+
+## 🏗️ System Architecture
+
+| Layer              | Technology                             |
+|-------------------|----------------------------------------|
+| Frontend (UI)     | React, Redux, React Router             |
+| Backend Services  | AWS Amplify, AWS AppSync, GraphQL      |
+| Authentication    | AWS Cognito                            |
+| Hosting           | AWS Amplify Hosting                    |
+| Maps & Routing    | OpenStreetMap API, Google Maps API     |
+| Charging Stations | OpenChargeMap API                      |
+
+---
+
+## 🗄️ Database Structure (DynamoDB via AppSync)
+
+- **Vehicles**: brand, model, battery range, port type
+- **Customers**: email, password, associated vehicles
+- **Admin**: email, password
+- **User Interactions**: searched addresses, clicked/collected stations
+
+---
+
+## 📊 Algorithm Highlights
+
+### Hybrid Route Algorithm (Greedy + Dynamic Programming)
+- Checks EV range between waypoints
+- If range is insufficient, inserts charging station stops
+- Adjusts route based on real-time data
+- Compares to Dijkstra’s algorithm for efficiency vs realism
+
+---
+
+## 🔒 System Considerations
+
+- **Reliability**: Handles outages and API failures gracefully
+- **Security**: Role-based access, secure Cognito auth
+- **Sustainability**: Promotes EV use through route optimization
+- **Scalability**: Deployed and scaled on AWS
+
+---
+
+## 📄 Functional Requirements
+
+- Automatic geolocation on load
+- Authenticated user dashboard
+- Vehicle management
+- Route calculation and visualization
+- Charging station integration
+- Admin access for analytics and oversight
+
+---
+
+## 👨‍💻 Team
+
+| Name             | Role                                      |
+|------------------|-------------------------------------------|
+| Guangyao Li       | Team Lead, Architecture & Admin Panel Dev |
+| Jiajun Liu        | Frontend & API Dev (Client)               |
+| Changsheng Tian  | Algorithm Developer                       |
+
+---
+
+## 📘 References
+
+See full documentation and citations in the [MSE806-Electric Vehicle Route Planner.pdf](./MSE806-Electric%20Vehicle%20Route%20Planner.pdf)
+
+---
+
+## 🧪 Future Improvements
+
+- Real-time traffic integration
+- Live charging station availability
+- Optimized charging time options
+- Feedback system
+
+---
+
+## 📄 License
+
+This project was developed for academic purposes at Yoobee College. For reuse or contributions, please contact the authors.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
